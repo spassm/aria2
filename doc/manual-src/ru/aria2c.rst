@@ -814,6 +814,12 @@ HTTP(S)/FTP, они тут же могут выгружаться в BitTorrent-
    так как это фактически удалит файлы с вашего диска.
    По умолчанию: ``false``
 
+.. option:: --bt-create-sub-dir [true|false]
+
+   Добавление имени торрента к пути папки скачивания
+   для мультифайловых торрентов. Это поведение по умолчанию.
+   По умолчанию: ``true``
+
 .. option:: --bt-require-crypto [true|false]
 
   Если задано ``true``, aria2 не принимает и не устанавливает соединение с
@@ -2250,6 +2256,7 @@ URI. Эти дополнительные строки должны начина�
   * :option:`bt-min-crypto-level <--bt-min-crypto-level>`
   * :option:`bt-prioritize-piece <--bt-prioritize-piece>`
   * :option:`bt-remove-unselected-file <--bt-remove-unselected-file>`
+  * :option:`bt-create-sub-dir <--bt-create-sub-dir>`
   * :option:`bt-request-peer-speed-limit <--bt-request-peer-speed-limit>`
   * :option:`bt-require-crypto <--bt-require-crypto>`
   * :option:`bt-save-metadata <--bt-save-metadata>`

@@ -2097,20 +2097,12 @@ bool saveAs(const std::string& filename, const std::string& data,
 
 std::string applyDir(const std::string& dir, const std::string& relPath)
 {
-  std::string s;
-  if (dir.empty()) {
-    s = "./";
-    s += relPath;
+  std::string s = dir.empty() ? "./" : dir;
+  if (!util::endsWith(s, "/")) {
+    s += "/";
   }
-  else {
-    s = dir;
-    if (dir == "/") {
-      s += relPath;
-    }
-    else {
-      s += "/";
-      s += relPath;
-    }
+  if (!relPath.empty()) {
+    s += relPath;
   }
 #ifdef __MINGW32__
   for (std::string::iterator i = s.begin(), eoi = s.end(); i != eoi; ++i) {

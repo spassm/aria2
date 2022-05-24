@@ -256,47 +256,45 @@ void extractFileEntries(const std::shared_ptr<DownloadContext>& ctx,
                            error_code::BITTORRENT_PARSE_ERROR);
       }
 
-      std::vector<std::string> pathelem(pathList->size() + 1);
-      pathelem[0] = utf8Name;
-      auto pathelemOutItr = pathelem.begin();
-      ++pathelemOutItr;
+      std::vector<std::string> pathelem;
       for (auto& p : *pathList) {
         const String* elem = downcast<String>(p);
         if (elem) {
-          (*pathelemOutItr++) = elem->s();
+          pathelem.push_back(util::encodeNonUtf8(util::escapePath(elem->s())));
         }
         else {
           throw DL_ABORT_EX2("Path element is not string.",
                              error_code::BITTORRENT_PARSE_ERROR);
         }
       }
-      std::string utf8Path = strjoin(
-          pathelem.begin(), pathelem.end(), "/",
-          std::function<std::string(const std::string&)>(util::encodeNonUtf8));
+
+      std::string utf8Path = pathelem.size() > 1
+                                 ? strjoin(pathelem.begin(), pathelem.end(), "/")
+                                 : pathelem.back();
+      if (option->getAsBool(PREF_BT_CREATE_SUB_DIR)) {
+        utf8Path = util::applyDir(util::escapePath(utf8Name), utf8Path);
+      }
+
       if (util::detectDirTraversal(utf8Path)) {
         throw DL_ABORT_EX2(fmt(MSG_DIR_TRAVERSAL_DETECTED, utf8Path.c_str()),
                            error_code::BITTORRENT_PARSE_ERROR);
       }
-      std::string pePath =
-          strjoin(pathelem.begin(), pathelem.end(), "/",
-                  std::function<std::string(const std::string&)>(
-                      static_cast<std::string (*)(const std::string&)>(
-                          util::percentEncode)));
-      std::vector<std::string> uris;
-      createUri(urlList.begin(), urlList.end(), std::back_inserter(uris),
-                pePath);
 
-      auto suffixPath = util::escapePath(utf8Path);
+      std::vector<std::string> uris;
+      createUri(urlList.begin(), urlList.end(), std::back_inserter(uris), util::percentEncode(utf8Path));
 
       auto fileEntry = std::make_shared<FileEntry>(
-          util::applyDir(option->get(PREF_DIR), suffixPath),
+          util::applyDir(option->get(PREF_DIR), utf8Path),
           fileLengthData->i(), offset, uris);
       fileEntry->setOriginalName(utf8Path);
-      fileEntry->setSuffixPath(suffixPath);
+      fileEntry->setSuffixPath(utf8Path);
       fileEntry->setMaxConnectionPerServer(maxConn);
       fileEntries.push_back(fileEntry);
       offset += fileEntry->getLength();
     }
+    auto suffixPath = option->getAsBool(PREF_BT_CREATE_SUB_DIR) ? util::escapePath(utf8Name) : "";
+    ctx->setBasePath(
+        util::applyDir(option->get(PREF_DIR), suffixPath));
   }
   else {
     // single-file mode;
@@ -340,10 +338,6 @@ void extractFileEntries(const std::shared_ptr<DownloadContext>& ctx,
     fileEntries.push_back(fileEntry);
   }
   ctx->setFileEntries(fileEntries.begin(), fileEntries.end());
-  if (torrent->mode == BT_FILE_MODE_MULTI) {
-    ctx->setBasePath(
-        util::applyDir(option->get(PREF_DIR), util::escapePath(utf8Name)));
-  }
 }
 } // namespace
 

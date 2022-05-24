@@ -778,6 +778,12 @@ BitTorrent Specific Options
    disk.
    Default: ``false``
 
+.. option:: --bt-create-sub-dir [true|false]
+
+   Appends torrent name to output directory
+   for multi files torrent. It is default behavior.
+   Default: ``true``
+
 .. option:: --bt-require-crypto [true|false]
 
   If ``true`` is given, aria2 doesn't accept and establish connection with legacy
@@ -2138,6 +2144,7 @@ of URIs. These optional lines must start with white space(s).
   * :option:`bt-min-crypto-level <--bt-min-crypto-level>`
   * :option:`bt-prioritize-piece <--bt-prioritize-piece>`
   * :option:`bt-remove-unselected-file <--bt-remove-unselected-file>`
+  * :option:`bt-create-sub-dir <--bt-create-sub-dir>`
   * :option:`bt-request-peer-speed-limit <--bt-request-peer-speed-limit>`
   * :option:`bt-require-crypto <--bt-require-crypto>`
   * :option:`bt-save-metadata <--bt-save-metadata>`

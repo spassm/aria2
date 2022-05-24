@@ -1129,5 +1129,8 @@
     "                              file saved by --bt-save-metadata option. If it is\n" \
     "                              successful, then skip downloading metadata from\n" \
     "                              DHT.")
+#define TEXT_BT_CREATE_SUB_DIR                                  \
+  _(" --bt-create-sub-dir[=true|false] Appends torrent name to output directory\n" \
+    "                              for multi files torrent. It is default behavior.")
 
 // clang-format on

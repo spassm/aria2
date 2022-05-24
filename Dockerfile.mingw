@@ -1,7 +1,9 @@
 # Dockerfile to build aria2 Windows binary using ubuntu mingw-w64
 # cross compiler chain.
 #
-# $ sudo docker build -t aria2-mingw - < Dockerfile.mingw
+# bash: $ sudo docker build -t aria2-mingw - < Dockerfile.mingw
+# OR
+# PowerShell: Get-Content Dockerfile.mingw | docker build -t aria2-mingw -
 #
 # After successful build, windows binary is located at
 # /aria2/src/aria2c.exe.  You can copy the binary using following
@@ -11,12 +13,12 @@
 # $ sudo docker cp $id:/aria2/src/aria2c.exe <dest>
 # $ sudo docker rm -v $id
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
-MAINTAINER Tatsuhiro Tsujikawa
+LABEL MAINTAINER="Tatsuhiro Tsujikawa"
 
 # Change HOST to x86_64-w64-mingw32 to build 64-bit binary
-ENV HOST i686-w64-mingw32
+ENV HOST x86_64-w64-mingw32
 
 # It would be better to use nearest ubuntu archive mirror for faster
 # downloads.
@@ -31,12 +33,11 @@ RUN apt-get update && \
         autopoint libcppunit-dev libxml2-dev libgcrypt20-dev lzip
 
 RUN curl -L -O https://gmplib.org/download/gmp/gmp-6.2.1.tar.lz && \
-    curl -L -O https://github.com/libexpat/libexpat/releases/download/R_2_4_1/expat-2.4.1.tar.bz2 && \
-    curl -L -O https://www.sqlite.org/2021/sqlite-autoconf-3360000.tar.gz && \
-    curl -L -O http://zlib.net/zlib-1.2.11.tar.gz && \
-    curl -L -O https://c-ares.haxx.se/download/c-ares-1.17.2.tar.gz && \
-    curl -L -O https://www.libssh2.org/download/libssh2-1.9.0.tar.gz && \
-    curl -L -O https://github.com/libssh2/libssh2/commit/ba149e804ef653cc05ed9803dfc94519ce9328f7.patch
+    curl -L -O https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2 && \
+    curl -L -O https://www.sqlite.org/2022/sqlite-autoconf-3380500.tar.gz && \
+    curl -L -O https://zlib.net/zlib-1.2.12.tar.gz && \
+    curl -L -O https://github.com/c-ares/c-ares/releases/download/cares-1_18_1/c-ares-1.18.1.tar.gz && \
+    curl -L -O https://github.com/libssh2/libssh2/releases/download/libssh2-1.10.0/libssh2-1.10.0.tar.gz
 
 RUN tar xf gmp-6.2.1.tar.lz && \
     cd gmp-6.2.1 && \
@@ -48,30 +49,30 @@ RUN tar xf gmp-6.2.1.tar.lz && \
         --disable-cxx \
         --enable-fat \
         CFLAGS="-mtune=generic -O2 -g0" && \
-    make install
+    make install -j$(nproc)
 
-RUN tar xf expat-2.4.1.tar.bz2 && \
-    cd expat-2.4.1 && \
+RUN tar xf expat-2.4.8.tar.bz2 && \
+    cd expat-2.4.8 && \
     ./configure \
         --disable-shared \
         --enable-static \
         --prefix=/usr/local/$HOST \
         --host=$HOST \
         --build=`dpkg-architecture -qDEB_BUILD_GNU_TYPE` && \
-    make install
+    make install -j$(nproc)
 
-RUN tar xf sqlite-autoconf-3360000.tar.gz && \
-    cd sqlite-autoconf-3360000 && \
+RUN tar xf sqlite-autoconf-3380500.tar.gz && \
+    cd sqlite-autoconf-3380500 && \
     ./configure \
         --disable-shared \
         --enable-static \
         --prefix=/usr/local/$HOST \
         --host=$HOST \
         --build=`dpkg-architecture -qDEB_BUILD_GNU_TYPE` && \
-    make install
+    make install -j$(nproc)
 
-RUN tar xf zlib-1.2.11.tar.gz && \
-    cd zlib-1.2.11 && \
+RUN tar xf zlib-1.2.12.tar.gz && \
+    cd zlib-1.2.12 && \
     CC=$HOST-gcc \
     AR=$HOST-ar \
     LD=$HOST-ld \
@@ -82,10 +83,10 @@ RUN tar xf zlib-1.2.11.tar.gz && \
         --libdir=/usr/local/$HOST/lib \
         --includedir=/usr/local/$HOST/include \
         --static && \
-    make install
+    make install -j$(nproc)
 
-RUN tar xf c-ares-1.17.2.tar.gz && \
-    cd c-ares-1.17.2 && \
+RUN tar xf c-ares-1.18.1.tar.gz && \
+    cd c-ares-1.18.1 && \
     ./configure \
         --disable-shared \
         --enable-static \
@@ -94,11 +95,10 @@ RUN tar xf c-ares-1.17.2.tar.gz && \
         --host=$HOST \
         --build=`dpkg-architecture -qDEB_BUILD_GNU_TYPE` \
         LIBS="-lws2_32" && \
-    make install
+    make install -j$(nproc)
 
-RUN tar xf libssh2-1.9.0.tar.gz && \
-    cd libssh2-1.9.0 && \
-    patch -p1 < ../ba149e804ef653cc05ed9803dfc94519ce9328f7.patch && \
+RUN tar xf libssh2-1.10.0.tar.gz && \
+    cd libssh2-1.10.0 && \
     ./configure \
         --disable-shared \
         --enable-static \
@@ -108,8 +108,12 @@ RUN tar xf libssh2-1.9.0.tar.gz && \
         --without-openssl \
         --with-wincng \
         LIBS="-lws2_32" && \
-    make install
-ADD https://api.github.com/repos/aria2/aria2/git/refs/heads/master version.json
-RUN git clone https://github.com/aria2/aria2 && \
-    cd aria2 && autoreconf -i && ./mingw-config && make && \
+    make install -j$(nproc)
+
+ADD https://api.github.com/repos/spassm/aria2/git/refs/heads/feat/BT_CREATE_SUB_DIR version.json
+
+RUN git clone https://github.com/spassm/aria2.git --depth 1 --branch "feat/BT_CREATE_SUB_DIR" && \
+    cd aria2 && \
+    autoreconf -i && \
+    ./mingw-config && make && \
     $HOST-strip src/aria2c.exe

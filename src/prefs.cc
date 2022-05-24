@@ -568,6 +568,7 @@ PrefPtr PREF_BT_ENABLE_HOOK_AFTER_HASH_CHECK =
     makePref("bt-enable-hook-after-hash-check");
 // values: true | false
 PrefPtr PREF_BT_LOAD_SAVED_METADATA = makePref("bt-load-saved-metadata");
+PrefPtr PREF_BT_CREATE_SUB_DIR = makePref("bt-create-sub-dir");
 
 /**
  * Metalink related preferences
